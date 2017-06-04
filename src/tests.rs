@@ -40,7 +40,7 @@ fn test_basic() {
     /* one sample check inside BMP for each property */
     assert_eq!(get_general_category(0x0040), Ok(GeneralCategory::PO));
     assert_eq!(get_script(0x0122), Ok(Script::LATIN));
-    assert_eq!(get_bidi_class(0x0032), Ok(BiDiNames::EN));
+    assert_eq!(get_bidi_class(0x0032), Ok(BiDiClass::EN));
     assert_eq!(get_east_asian_width(0x4000), Ok(EastAsianWidth::W));
     assert_eq!(get_linebreak_class(0xfeff), Ok(LinebreakClass::WJ));
     assert_eq!(get_mirrored(0x0028), Ok(true));
