@@ -22,6 +22,7 @@
 #![feature(try_from)]
 #[cfg(test)] mod tests;
 use std::convert::TryFrom;
+use std::cmp::Ordering;
 
 mod db;
 pub mod types;
@@ -78,19 +79,19 @@ fn get_decomp_record(code: u32) -> [u16; 19] {
 }
 
 fn get_comp_index(code: u32, idx: &[ReIndex]) -> Option<usize> {
-    let mut i = 0;
-    while idx[i].start != 0 {
-        let cur = idx[i];
-        i += 1;
-        if code < cur.start {
-            return None;
+    let res = idx.binary_search_by(|probe| {
+        if code < probe.start {
+            Ordering::Greater
+        } else if code > (probe.start as u32 + probe.count as u32) {
+            Ordering::Less
+        } else {
+            Ordering::Equal
         }
-        if code <= cur.start + cur.count as u32 {
-            return Some(cur.index as usize + (code as usize - cur.start as usize));
-        }
+    });
+    match res {
+        Ok(v) => Some(idx[v].index as usize + (code as usize - idx[v].start as usize)),
+        Err(_) => None
     }
-
-    return None;
 }
 
 fn hangul_pair_decompose(code: u32) -> Option<(u32, u32)> {
