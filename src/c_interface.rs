@@ -18,9 +18,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
- use super::*;
 
-/* NOTE: this is unfinished! */
+//! C interface to rucdn. This is unfinished, but the goal is to provide an
+//! API fully compatible to UCDN.
+
+ use super::*;
 
 #[no_mangle]
 pub extern fn ucdn_get_unicode_version() -> *const u8 {

@@ -19,6 +19,11 @@
  * SOFTWARE.
  */
 
+//! Unicode Database and Normalization
+//!
+//! This library provides access to common Unicode properties and transformations.
+
+
 #![feature(try_from)]
 #[cfg(test)] mod tests;
 use std::convert::TryFrom;
@@ -133,11 +138,19 @@ fn decode_utf16(seq: &[u16]) -> (u32, usize) {
     }
 }
 
+/**
+ * Return version of the Unicode database.
+ *
+ */
 pub fn get_unicode_version() -> &'static str {
     // strip off zero termination
     &db::UNIDATA_VERSION[0..db::UNIDATA_VERSION.len()-1]
 }
 
+/**
+ * Get combining class of a codepoint as defined in UAX#44.
+ *
+ */
 pub fn get_combining_class(code: u32) -> Result<u8, &'static str> {
     match get_ucd_record(code) {
         Ok(v) => Ok(v.combining),
@@ -145,6 +158,10 @@ pub fn get_combining_class(code: u32) -> Result<u8, &'static str> {
     }  
 }
 
+/**
+ * Get east-asian width of a codepoint as defined in UAX#11.
+ *
+ */
 pub fn get_east_asian_width(code: u32) -> Result<EastAsianWidth, &'static str> {
     match get_ucd_record(code) {
         Ok(v) => EastAsianWidth::try_from(v.east_asian_width),
@@ -152,6 +169,10 @@ pub fn get_east_asian_width(code: u32) -> Result<EastAsianWidth, &'static str> {
     }  
 }
 
+/**
+ * Get general category of a codepoint as defined in UAX#44.
+ *
+ */
 pub fn get_general_category(code: u32) -> Result<GeneralCategory, &'static str> {
     match get_ucd_record(code) {
         Ok(v) => GeneralCategory::try_from(v.category),
@@ -159,6 +180,10 @@ pub fn get_general_category(code: u32) -> Result<GeneralCategory, &'static str> 
     }  
 }
 
+/**
+ * Get bidirectional class of a codepoint as defined in UAX#44.
+ *
+ */
 pub fn get_bidi_class(code: u32) -> Result<BiDiClass, &'static str> {
     match get_ucd_record(code) {
         Ok(v) => BiDiClass::try_from(v.bidi_class),
@@ -166,6 +191,10 @@ pub fn get_bidi_class(code: u32) -> Result<BiDiClass, &'static str> {
     }  
 }
 
+/**
+ * Check if codepoint can be mirrored.
+ *
+ */
 pub fn get_mirrored(code: u32) -> Result<bool, &'static str> {
     match get_ucd_record(code) {
         Ok(v) => Ok(v.mirrored > 0),
@@ -173,6 +202,10 @@ pub fn get_mirrored(code: u32) -> Result<bool, &'static str> {
     }  
 }
 
+/**
+ * Get script of a codepoint as defined in UAX#24.
+ *
+ */
 pub fn get_script(code: u32) -> Result<Script, &'static str> {
     match get_ucd_record(code) {
         Ok(v) => Script::try_from(v.script),
@@ -180,6 +213,12 @@ pub fn get_script(code: u32) -> Result<Script, &'static str> {
     }  
 }
 
+/**
+ * Get unresolved linebreak class of a codepoint. This does not take
+ * rule LB1 of UAX#14 into account. See get_resolved_linebreak_class()
+ * for resolved linebreak classes.
+ *
+ */
 pub fn get_linebreak_class(code: u32) -> Result<LinebreakClass, &'static str> {
     match get_ucd_record(code) {
         Ok(v) => LinebreakClass::try_from(v.linebreak_class),
@@ -187,6 +226,13 @@ pub fn get_linebreak_class(code: u32) -> Result<LinebreakClass, &'static str> {
     }    
 }
 
+/**
+ * Get resolved linebreak class of a codepoint. This resolves characters
+ * in the AI, SG, XX, SA and CJ classes according to rule LB1 of UAX#14.
+ * In addition the CB class is resolved as the equivalent B2 class and
+ * the NL class is resolved as the equivalent BK class.
+ *
+ */
 pub fn get_resolved_linebreak_class(code: u32) -> LinebreakClass {
     match get_ucd_record(code) {
         Ok(w) => match LinebreakClass::try_from(w.linebreak_class) {
@@ -209,6 +255,10 @@ pub fn get_resolved_linebreak_class(code: u32) -> LinebreakClass {
     }
 }
 
+/**
+ * Mirror a codepoint. Returns Err if no mirroring exists.
+ *
+ */
 pub fn mirror(code: u32) -> Result<u32, &'static str> {
     if code >= BMP_MAX_CODEPOINT {
         return Err("invalid char")
@@ -221,7 +271,7 @@ pub fn mirror(code: u32) -> Result<u32, &'static str> {
     }
 }
 
-fn get_paired_bracket(code: u32) -> Option<BracketPair> {
+fn paired_bracket(code: u32) -> Option<BracketPair> {
     if code >= BMP_MAX_CODEPOINT {
         return None
     }
@@ -233,13 +283,27 @@ fn get_paired_bracket(code: u32) -> Option<BracketPair> {
     }
 }
 
-pub fn paired_bracket(code: u32) -> Result<u32, &'static str> {
-    match get_paired_bracket(code) {
+/**
+ * Get paired bracket for a codepoint. Returns Err if no matching bracket
+ * exists.
+ *
+ */
+pub fn get_paired_bracket(code: u32) -> Result<u32, &'static str> {
+    match paired_bracket(code) {
         Some(v) => Ok(v.to as u32),
         None => Err("no paired bracket found")
     }
 }
 
+/**
+ * Pairwise canonical decomposition of a codepoint. This includes
+ * Hangul Jamo decomposition (see chapter 3.12 of the Unicode core
+ * specification).
+ *
+ * Hangul is decomposed into L and V jamos for LV forms, and an
+ * LV precomposed syllable and a T jamo for LVT forms.
+ *
+ */
 pub fn decompose(code: u32) -> Result<(u32, u32), &'static str> {
     // Try Hangul decomposition
     match hangul_pair_decompose(code) {
@@ -264,8 +328,12 @@ pub fn decompose(code: u32) -> Result<(u32, u32), &'static str> {
     }
 }
 
-pub fn paired_bracket_type(code: u32) -> Result<BracketType, &'static str> {
-    match get_paired_bracket(code) {
+/**
+ * Get paired bracket type for a codepoint as defined in UAX#9.
+ *
+ */
+pub fn get_paired_bracket_type(code: u32) -> Result<BracketType, &'static str> {
+    match paired_bracket(code) {
         Some(v) => BracketType::try_from(v.bracket_type),
         None => Ok(BracketType::None)
     }
@@ -280,6 +348,17 @@ fn get_comp_data(l: usize, r: usize) -> u32 {
     db::COMP_DATA[index2 + offset2]
 }
 
+
+/**
+ * Pairwise canonical composition of two codepoints. This includes
+ * Hangul Jamo composition (see chapter 3.12 of the Unicode core
+ * specification).
+ *
+ * Hangul composition expects either L and V jamos, or an LV
+ * precomposed syllable and a T jamo. This is exactly the inverse
+ * of pairwise Hangul decomposition.
+ *
+ */
 pub fn compose(a: u32, b: u32) -> Result<u32, &'static str> {
     // Try Hangul composition
     match hangul_pair_compose(a, b) {
@@ -296,6 +375,10 @@ pub fn compose(a: u32, b: u32) -> Result<u32, &'static str> {
     }    
 }
 
+/**
+ * Compatibility decomposition of a codepoint.
+ *
+ */
 pub fn compat_decompose(code: u32) -> Result<(usize, [u32; 18]), &'static str>  {
     let record = get_decomp_record(code);
     let record_len = (record[0] >> 8) as usize;

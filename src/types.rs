@@ -19,6 +19,8 @@
  * SOFTWARE.
  */
 
+//! Types associated with Unicode character properties.
+
 pub use db::BiDiClass;
 pub use db::EastAsianWidth;
 pub use db::GeneralCategory;
