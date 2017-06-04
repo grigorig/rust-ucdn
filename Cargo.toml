@@ -1,0 +1,12 @@
+[package]
+name = "rucdn"
+version = "0.1.0"
+authors = ["Grigori Goronzy <greg@chown.ath.cx>"]
+license = "ISC"
+description = "Unicode Database and Normalization"
+
+[lib]
+crate-type = ["dylib", "rlib"]
+
+[profile.release]
+panic = "abort"
