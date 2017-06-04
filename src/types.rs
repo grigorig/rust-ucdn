@@ -29,36 +29,6 @@ pub use db::Script;
 use std::mem::transmute;
 use std::convert::TryFrom;
 
-#[derive(Copy, Clone)]
-pub struct UCDRecord {
-    pub category: u8,
-    pub combining: u8,
-    pub bidi_class: u8,
-    pub mirrored: u8,
-    pub east_asian_width: u8,
-    pub script: u8,
-    pub linebreak_class: u8
-}
-
-#[derive(Copy, Clone)]
-pub struct MirrorPair {
-    pub from: u16,
-    pub to: u16
-}
-#[derive(Copy, Clone)]
-pub struct BracketPair {
-    pub from: u16,
-    pub to: u16,
-    pub bracket_type: u8
-}
-
-#[derive(Copy, Clone)]
-pub struct ReIndex {
-    pub start: u32,
-    pub count: i16,
-    pub index: i16
-}
-
 #[derive(Copy, Clone, PartialEq, Debug)] #[repr(u8)]
 pub enum BracketType {
     Open = 0,

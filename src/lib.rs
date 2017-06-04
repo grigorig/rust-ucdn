@@ -32,6 +32,8 @@ use std::cmp::Ordering;
 mod db;
 pub mod types;
 pub use types::*;
+mod db_types;
+use db_types::*;
 pub mod c_interface;
 
 /* Generic Unicode */
